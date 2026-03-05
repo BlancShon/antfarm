@@ -502,6 +502,17 @@ export function claimStep(agentId: string): ClaimResult {
          WHERE prev.run_id = s.run_id
            AND prev.step_index < s.step_index
            AND prev.status NOT IN ('done', 'skipped')
+           -- verifyEach exception:
+           -- If a loop step is intentionally kept "running" while we run the verify step,
+           -- don't treat that loop step as a blocker for claiming the verify step.
+           AND NOT (
+             s.step_id = 'verify'
+             AND prev.type = 'loop'
+             AND prev.status = 'running'
+             AND prev.loop_config IS NOT NULL
+             AND prev.loop_config LIKE '%"verifyEach":true%'
+             AND prev.loop_config LIKE '%"verifyStep":"' || s.step_id || '"%'
+           )
        )
     ORDER BY s.step_index ASC, s.step_id ASC
      LIMIT 1`
