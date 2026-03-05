@@ -69,7 +69,11 @@ The step input will provide workflow-specific verification instructions. Follow 
 
 ## Visual/Browser-Based Verification (Conditional)
 
-> **Only perform visual verification when the step prompt explicitly requests it** (e.g., when frontend changes are detected). If the step prompt does not mention visual verification, skip this section entirely.
+> **Only perform visual verification when the current story actually contains frontend/UI changes.**
+>
+> - If the step prompt requests visual verification but the story's commit(s) do not touch any frontend/UI files, you may **skip visual verification** and proceed with code-level verification only.
+> - Use the story's `COMMITS:` (if provided) and inspect `git show --name-only <commit>` to decide.
+> - If you cannot determine story-scoped changes, fall back to the step prompt flag.
 
 When visual verification is requested, use the **agent-browser** skill to inspect rendered output:
 

@@ -389,8 +389,36 @@ export function cleanupAbandonedSteps(): void {
  * Compute whether a branch has frontend changes relative to main.
  * Returns 'true' or 'false' as a string for template context.
  */
-export function computeHasFrontendChanges(repo: string, branch: string): string {
+export function computeHasFrontendChanges(repo: string, branch: string, commits?: string): string {
   try {
+    // Prefer story-scoped detection when the run context includes COMMITS from the last story.
+    // This prevents a single early frontend change from forcing visual verification on every
+    // subsequent backend-only story.
+    const commitIds = (commits ?? "")
+      .split(/[^0-9a-f]+/i)
+      .map(s => s.trim())
+      .filter(s => s.length >= 7);
+
+    if (commitIds.length > 0) {
+      const files: string[] = [];
+      for (const id of commitIds) {
+        try {
+          const out = execFileSync("git", ["show", "--name-only", "--pretty=format:", id], {
+            cwd: repo,
+            encoding: "utf-8",
+            timeout: 10_000,
+          });
+          files.push(...out.trim().split("\n").filter(f => f.length > 0));
+        } catch {
+          // ignore bad commit ids; fall back to branch diff below
+        }
+      }
+      if (files.length > 0) {
+        return isFrontendChange(files) ? "true" : "false";
+      }
+    }
+
+    // Fallback: branch-wide diff
     const output = execFileSync("git", ["diff", "--name-only", `main..${branch}`], {
       cwd: repo,
       encoding: "utf-8",
@@ -537,7 +565,12 @@ export function claimStep(agentId: string): ClaimResult {
 
   // Compute has_frontend_changes from git diff when repo and branch are available
   if (context["repo"] && context["branch"]) {
-    context["has_frontend_changes"] = computeHasFrontendChanges(context["repo"], context["branch"]);
+    context["has_frontend_changes"] = computeHasFrontendChanges(
+      context["repo"],
+      context["branch"],
+      // COMMITS is provided by implementers; it becomes lowercase in run context
+      context["commits"],
+    );
   } else {
     context["has_frontend_changes"] = "false";
   }
