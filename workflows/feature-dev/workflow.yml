@@ -191,6 +191,7 @@ steps:
 
       Reply with:
       STATUS: done
+      COMMITS: <one or more git commit SHAs created for this story (space-separated)>
       CHANGES: what you implemented
       TESTS: what tests you wrote
     expects: "STATUS: done"

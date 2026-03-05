@@ -565,11 +565,27 @@ export function claimStep(agentId: string): ClaimResult {
 
   // Compute has_frontend_changes from git diff when repo and branch are available
   if (context["repo"] && context["branch"]) {
+    // Prefer story-scoped commits for frontend detection. If COMMITS is missing or stale,
+    // also include the current HEAD of the branch so backend-only stories don't inherit
+    // early frontend changes.
+    let commits = String(context["commits"] ?? "");
+    try {
+      const head = execFileSync("git", ["rev-parse", "HEAD"], {
+        cwd: context["repo"],
+        encoding: "utf-8",
+        timeout: 10_000,
+      }).trim();
+      if (head && !commits.includes(head) && !commits.includes(head.slice(0, 7))) {
+        commits = commits ? `${commits} ${head}` : head;
+      }
+    } catch {
+      // ignore
+    }
+
     context["has_frontend_changes"] = computeHasFrontendChanges(
       context["repo"],
       context["branch"],
-      // COMMITS is provided by implementers; it becomes lowercase in run context
-      context["commits"],
+      commits,
     );
   } else {
     context["has_frontend_changes"] = "false";
