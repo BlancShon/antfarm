@@ -186,7 +186,6 @@ export async function setupAgentCrons(workflow: WorkflowSpec): Promise<void> {
       sessionTarget: "isolated",
       agentId,
       payload: { kind: "agentTurn", message: prompt, model: pollingModel, timeoutSeconds },
-      delivery: { mode: "none" },
       enabled: true,
     });
 

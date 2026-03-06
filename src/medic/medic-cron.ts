@@ -83,7 +83,6 @@ export async function installMedicCron(): Promise<{ ok: boolean; error?: string 
       model: MEDIC_MODEL,
       timeoutSeconds: MEDIC_TIMEOUT_SECONDS,
     },
-    delivery: { mode: "none" },
     enabled: true,
   });
 
