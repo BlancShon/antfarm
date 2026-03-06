@@ -339,7 +339,7 @@ steps:
   - id: pr
     agent: pr
     input: |
-      Create a pull request for the security fixes.
+      Create (or locate) a pull request for the security fixes.
 
       REPO: {{repo}}
       BRANCH: {{branch}}
@@ -350,11 +350,18 @@ steps:
       HIGH_COUNT: {{high_count}}
       DEFERRED: {{deferred}}
       CHANGES: {{changes}}
-      RESULTS: {{results}}
       AUDIT_AFTER: {{audit_after}}
 
       PROGRESS LOG:
       {{progress}}
+
+      Instructions:
+      1. cd {{repo}} and ensure you're on {{branch}} and pushed.
+      2. FIRST, check if a PR already exists for this branch (avoid duplicates):
+         - gh pr view {{branch}} --json url,number,state --jq '.url'  (preferred)
+      3. If no PR exists, create one with gh pr create.
+      4. The PR body must include what was tested. If there is no structured RESULTS key available,
+         derive test/audit outcomes from the PROGRESS LOG and/or re-run the final test command if needed.
 
       PR title format: fix(security): audit and remediation YYYY-MM-DD
 
